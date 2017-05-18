@@ -60,11 +60,11 @@ install:
   - npm install
 
 script:
-  - echo "--- Start B2SHARE service suite "
   - cd b2share/dockerize
   - docker-compose up -d
   - cd ../..
-  - echo "--- Waiting for B2SHARE "
   - until $(curl -sfk -o /dev/null https://b2share.local/api/); do printf '.'; sleep 5; done
-  - echo "--- Start tests "
+  - curl -sfk https://b2share.local/api/
+  - curl -sfk https://b2share.local/
+  - ls
   - npm test # -- endtoend
