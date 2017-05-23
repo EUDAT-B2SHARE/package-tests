@@ -32,18 +32,19 @@ addons:
 
 before_install:
   - echo ${TRAVIS_BUILD_DIR}
+  - cd ${TRAVIS_BUILD_DIR}/
   - git clone https://github.com/emanueldima/b2share.git --branch=ui-tests
   # - git clone https://github.com/EUDAT-B2SHARE/b2share.git
   # - git clone https://github.com/EUDAT-B2SHARE/dockerize.git
 
 install:
-  # - cd b2share
+  ### Build docker image for B2SHARE (nightly)
+  # - cd ${TRAVIS_BUILD_DIR}/b2share
   # - docker build . -f dockerize/Dockerfile -t b2share-packagetest
-  # - cd dockerize
-  # - cd ../dockerize
+  # - cd ${TRAVIS_BUILD_DIR}/dockerize
   # - "sed -r 's/^(\s*)(image\s*:\s*eudatb2share/b2share:.*$)/\1image: b2share-packagetest/' docker-compose.yml"
   # - docker-compose up -d
-  - cd b2share/dockerize
+  - cd ${TRAVIS_BUILD_DIR}/b2share/dockerize
   - export B2SHARE_DATADIR=${TRAVIS_BUILD_DIR}/b2share-data
   - export B2SHARE_JSONSCHEMAS_HOST=b2share.local
   - export B2SHARE_SECRET_KEY=L2dWBTorUTQq1XSuiwofpmGYZZ
@@ -56,15 +57,21 @@ install:
   - export INIT_DB_AND_INDEX=1
   - export LOAD_DEMO_COMMUNITIES_AND_RECORDS=1
   - docker-compose build
-  - cd ../..
-  - npm install
+  ### Build docker image for npmtest
+  - cd ${TRAVIS_BUILD_DIR}/npmtest
+  - cp -r ${TRAVIS_BUILD_DIR}/b2share/webui/src/__tests__ .
+  - docker build . -t npmtest
 
 script:
-  - cd b2share/dockerize
+  ### Start B2SHARE
+  - cd ${TRAVIS_BUILD_DIR}/b2share/dockerize
   - docker-compose up -d
-  - cd ../..
+  ### Wait for B2SHARE
+  - cd ${TRAVIS_BUILD_DIR}
   - until $(curl -sfk -o /dev/null https://b2share.local/api/); do printf '.'; sleep 5; done
   - curl -sfk https://b2share.local/api/
-  - curl -sfk https://b2share.local/
-  - ls
-  - npm test # -- endtoend
+  ### Start testing
+  - ls -l
+  - ip addr show
+  - export IP_ADDR=$(ip addr show eth0 | awk '/inet / {print $2}' | cut -d'/' -f1)
+  - docker run --add-host b2share.local:$IP_ADDR npmtest
