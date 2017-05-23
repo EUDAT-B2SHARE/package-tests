@@ -36,6 +36,6 @@ RUN npm install --silent
 ADD . /workspace
 
 ENTRYPOINT ["/entrypoint"]
-CMD ["npm", "test"]
+CMD ["npm", "test", "--", "--forceExit"]
 
 #ENV DEBUG="nightmare"
