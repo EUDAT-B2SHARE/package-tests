@@ -43,7 +43,6 @@ install:
   # - docker build . -f dockerize/Dockerfile -t b2share-packagetest
   # - cd ${TRAVIS_BUILD_DIR}/dockerize
   # - "sed -r 's/^(\s*)(image\s*:\s*eudatb2share/b2share:.*$)/\1image: b2share-packagetest/' docker-compose.yml"
-  # - docker-compose up -d
   - cd ${TRAVIS_BUILD_DIR}/b2share/dockerize
   - export B2SHARE_DATADIR=${TRAVIS_BUILD_DIR}/b2share-data
   - export B2SHARE_JSONSCHEMAS_HOST=b2share.local
@@ -71,7 +70,5 @@ script:
   - until $(curl -sfk -o /dev/null https://b2share.local/api/); do printf '.'; sleep 5; done
   - curl -sfk https://b2share.local/api/
   ### Start testing
-  - ls -l
-  - ip addr show
   - export IP_ADDR=$(ip addr show eth0 | awk '/inet / {print $2}' | cut -d'/' -f1)
-  - docker run --add-host b2share.local:$IP_ADDR npmtest
+  - docker run --add-host b2share.local:$IP_ADDR -e "AUTOTEST_USER=$AUTOTEST_USER" -e "AUTOTEST_PASS=$AUTOTEST_PASS" -e "AUTOTEST_EMAIL=$AUTOTEST_EMAIL" npmtest
