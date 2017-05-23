@@ -2,8 +2,8 @@ FROM node:latest
 
 # Based on instructions at https://github.com/segmentio/nightmare/issues/224
 
-RUN apt-get update && \
-    apt-get install -y \
+RUN apt-get -qq update && \
+    apt-get -qq install -y \
             xvfb \
             x11-xkb-utils \
             xfonts-100dpi \
@@ -31,7 +31,7 @@ RUN chmod +x /entrypoint
 
 WORKDIR /workspace
 ADD package.json /workspace
-RUN npm install
+RUN npm install --silent
 
 ADD . /workspace
 
