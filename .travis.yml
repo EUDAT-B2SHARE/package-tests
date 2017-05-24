@@ -31,19 +31,9 @@ addons:
     - b2share.local
 
 before_install:
-  - echo ${TRAVIS_BUILD_DIR}
-  - cd ${TRAVIS_BUILD_DIR}/
-  - git clone https://github.com/emanueldima/b2share.git --branch=ui-tests
-  # - git clone https://github.com/EUDAT-B2SHARE/b2share.git
+  - cd ${TRAVIS_BUILD_DIR}
+  - git clone https://github.com/EUDAT-B2SHARE/b2share.git
   # - git clone https://github.com/EUDAT-B2SHARE/dockerize.git
-
-install:
-  ### Build docker image for B2SHARE (nightly)
-  # - cd ${TRAVIS_BUILD_DIR}/b2share
-  # - docker build . -f dockerize/Dockerfile -t b2share-packagetest
-  # - cd ${TRAVIS_BUILD_DIR}/dockerize
-  # - "sed -r 's/^(\s*)(image\s*:\s*eudatb2share/b2share:.*$)/\1image: b2share-packagetest/' docker-compose.yml"
-  - cd ${TRAVIS_BUILD_DIR}/b2share/dockerize
   - export B2SHARE_DATADIR=${TRAVIS_BUILD_DIR}/b2share-data
   - export B2SHARE_JSONSCHEMAS_HOST=b2share.local
   - export B2SHARE_SECRET_KEY=L2dWBTorUTQq1XSuiwofpmGYZZ
@@ -55,13 +45,22 @@ install:
   - export USE_STAGING_B2ACCESS=1
   - export INIT_DB_AND_INDEX=1
   - export LOAD_DEMO_COMMUNITIES_AND_RECORDS=1
+
+install:
+  ### Build docker image for B2SHARE (nightly)
+  # - cd ${TRAVIS_BUILD_DIR}/b2share
+  # - docker build . -f dockerize/Dockerfile -t b2share-packagetest
+  # - cd ${TRAVIS_BUILD_DIR}/dockerize
+  # - "sed -r 's/^(\s*)(image\s*:\s*eudatb2share/b2share:.*$)/\1image: b2share-packagetest/' docker-compose.yml"
+  - cd ${TRAVIS_BUILD_DIR}/b2share/dockerize
+  - docker-compose pull
   - docker-compose build
   ### Build docker image for npmtest
   - cd ${TRAVIS_BUILD_DIR}/npmtest
-  - cp -r ${TRAVIS_BUILD_DIR}/b2share/webui/src/__tests__ .
+  - mv ${TRAVIS_BUILD_DIR}/b2share/webui/src/__tests__ .
   - docker build . -t npmtest
 
-script:
+before_script:
   ### Start B2SHARE
   - cd ${TRAVIS_BUILD_DIR}/b2share/dockerize
   - docker-compose up -d
@@ -69,6 +68,7 @@ script:
   - cd ${TRAVIS_BUILD_DIR}
   - until $(curl -sfk -o /dev/null https://b2share.local/api/); do printf '.'; sleep 5; done
   - curl -sfk https://b2share.local/api/
-  ### Start testing
+
+script:
   - export IP_ADDR=$(ip addr show eth0 | awk '/inet / {print $2}' | cut -d'/' -f1)
   - docker run --add-host b2share.local:$IP_ADDR -e "AUTOTEST_USER=$AUTOTEST_USER" -e "AUTOTEST_PASS=$AUTOTEST_PASS" -e "AUTOTEST_EMAIL=$AUTOTEST_EMAIL" npmtest
